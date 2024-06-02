@@ -916,3 +916,5 @@ CREATE INDEX idx_product_tag_product ON otus.product_tag (product_fk);
 CREATE INDEX idx_product_tag_tag ON otus.product_tag (tag_fk);
 CREATE INDEX idx_log_user ON otus.log (user_fk);
 
+ALTER TABLE users ADD COLUMN metadata JSON;
+
