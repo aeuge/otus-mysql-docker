@@ -15,7 +15,7 @@
 ## Изменения в схеме базы данных
 
 ### Модификации
-1. **Таблица `users`**
+1. **Таблица `user`**
     - Добавлен новый столбец `metadata` типа JSON.
         - **Причина**: Для хранения дополнительной информации о пользователях, такой как предпочтения и настройки, в гибком формате JSON.
 
@@ -23,5 +23,24 @@
 
 #### Вставка данных с использованием JSON
 ```sql
-INSERT INTO users (username, email, password, metadata) 
-VALUES ('john_doe', 'john@example.com', 'hashedpassword', '{"age": 30, "preferences": {"theme": "dark", "notifications": true}}');
+INSERT INTO otus.user (email,
+                       password_hash,
+                       metadata)
+VALUES ('john@example.com',
+        'hashedpassword',
+        '{
+        "age": 30,
+        "preferences": {
+            "theme": "dark",
+            "notifications": true
+        }
+    }');
+```
+
+#### Выборка данных с использованием JSON
+```sql
+SELECT *
+  FROM otus.user
+ WHERE JSON_EXTRACT(metadata, '$.age') > 25
+   AND JSON_EXTRACT(metadata, '$.preferences.notifications') = TRUE;
+```
