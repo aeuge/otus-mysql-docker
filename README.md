@@ -31,7 +31,9 @@ INNER JOIN
 INNER JOIN 
     otus.brand ON product.brand_fk = brand.id
 INNER JOIN 
-    otus.seller ON product.seller_fk = seller.id;
+    otus.seller ON product.seller_fk = seller.id
+WHERE
+    seller.name = 'Specific Seller';
 ```
 
 ## 2. Запрос с LEFT JOIN
@@ -85,7 +87,7 @@ SELECT
   FROM
       otus.user
  WHERE
-     email LIKE '%example.com%';
+     email LIKE '%@example.com%';
 ```
 Описание: В проекте этот запрос нужен для фильтрации пользователей по домену электронной почты.
 
