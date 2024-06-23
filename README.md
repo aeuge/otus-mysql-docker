@@ -150,3 +150,159 @@ SELECT *
  WHERE JSON_EXTRACT(metadata, '$.age') > 25
    AND JSON_EXTRACT(metadata, '$.preferences.notifications') = TRUE;
 ```
+
+### ДЗ: DML: агрегация и сортировка
+
+## Предзаполнение данными в скрипте fill.sql
+
+1**группировки с ипользованием CASE, HAVING, ROLLUP, GROUPING() :**
+- CASE
+Запрос:
+```
+SELECT
+    type.name AS category,
+    COUNT(product.id) AS total_products,
+    SUM(CASE WHEN product.price > 100 THEN 1 ELSE 0 END) AS expensive_products,
+    SUM(CASE WHEN product.price <= 100 THEN 1 ELSE 0 END) AS cheap_products
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+ GROUP BY
+     type.name;
+```
+Ответ:
+![img_3.png](img_3.png)
+
+- HAVING
+  Запрос:
+```
+SELECT
+    type.name AS category,
+    COUNT(product.id) AS total_products,
+    SUM(product.price) AS total_price,
+    AVG(product.price) AS average_price
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+ GROUP BY
+     type.name
+HAVING
+    SUM(product.price) > 1000;
+```
+Ответ:
+![img_4.png](img_4.png)
+
+- ROLLUP
+  Запрос:
+```
+SELECT
+    CASE
+        WHEN GROUPING(type.name) = 1 THEN 'Total'
+        ELSE type.name
+        END AS category,
+    COUNT(product.id) AS total_products
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+ GROUP BY
+     type.name WITH ROLLUP;
+```
+Ответ:
+![img_5.png](img_5.png)
+
+- GROUPING
+  Запрос:
+```
+SELECT
+    CASE
+        WHEN GROUPING(type.name) = 1 THEN 'Total'
+        ELSE type.name
+        END AS category,
+    COUNT(product.id) AS total_products,
+    GROUPING(type.name) AS is_total
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+ GROUP BY
+     type.name WITH ROLLUP;
+```
+Ответ:
+![img_6.png](img_6.png)
+
+
+
+2**для магазина к предыдущему списку продуктов добавить максимальную и минимальную цену и кол-во предложений**
+Запрос:
+```
+SELECT
+    product.id,
+    product.name,
+    type.name AS category,
+    brand.name AS brand,
+    seller.name AS seller,
+    product.price,
+    product.discount,
+    MIN(product.price) OVER (PARTITION BY type.id) AS min_price,
+    MAX(product.price) OVER (PARTITION BY type.id) AS max_price,
+    COUNT(*) OVER (PARTITION BY type.id) AS offer_count
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+          JOIN
+      otus.brand ON product.brand_fk = brand.id
+          JOIN
+      otus.seller ON product.seller_fk = seller.id;
+```
+Ответ:
+![img.png](img.png)
+
+3**сделать выборку показывающую самый дорогой и самый дешевый товар в каждой категории**
+Запрос:
+```
+WITH PriceRank AS (
+    SELECT
+        product.id,
+        product.name,
+        type.name AS category,
+        product.price,
+        ROW_NUMBER() OVER (PARTITION BY type.id ORDER BY product.price DESC) AS price_rank_desc,
+        ROW_NUMBER() OVER (PARTITION BY type.id ORDER BY product.price ASC) AS price_rank_asc
+    FROM
+        otus.product
+    JOIN
+        otus.type ON product.type_fk = type.id
+)
+SELECT
+    id,
+    name,
+    category,
+    price
+FROM
+    PriceRank
+WHERE
+    price_rank_desc = 1
+    OR price_rank_asc = 1;
+```
+Ответ:
+![img_1.png](img_1.png)
+
+4**сделать rollup с количеством товаров по категориям**
+Запрос:
+```
+SELECT
+    type.name AS category,
+    COUNT(product.id) AS product_count
+  FROM
+      otus.product
+          JOIN
+      otus.type ON product.type_fk = type.id
+ GROUP BY
+     type.name WITH ROLLUP;
+```
+Ответ:
+![img_2.png](img_2.png)
